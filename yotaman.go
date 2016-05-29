@@ -4,7 +4,6 @@ import (
     "fmt"
     "os"
     "github.com/spf13/cobra"
-    "./speedtest"
     "./selfcare"
 )
 
@@ -15,34 +14,6 @@ type Config struct {
 
 var RootCmd = &cobra.Command{
     Use: "yotaman",
-}
-
-var OptimizedTariffCmd = &cobra.Command{
-    Use: "optimize",
-    Short: "Optimize tariff speed by avaliable bandwidth",
-    Run: func(cmd *cobra.Command, args []string) {
-        var optimizedTariff *selfcare.Tariff
-
-        currentSpeed := speedtest.Start()
-        fmt.Println(currentSpeed)
-        return
-
-        device := selfcare.GetCurrentDevice()
-
-        for _, tariff := range device.Tariffs {
-            if currentSpeed < tariff.Speed() {
-                optimizedTariff = &tariff
-                break
-            }
-        }
-
-        if optimizedTariff != nil {
-            device.ChangeTariff(*optimizedTariff)
-            fmt.Println("Tariff changed: ", optimizedTariff.Speed())
-        } else {
-            fmt.Println("You already have optimized tariff.")
-        }
-    },
 }
 
 var ListTariffCmd = &cobra.Command{
@@ -80,7 +51,6 @@ var SetTariffCmd = &cobra.Command{
 }
 
 func main() {
-    RootCmd.AddCommand(OptimizedTariffCmd)
     RootCmd.AddCommand(ListTariffCmd)
     RootCmd.AddCommand(SetTariffCmd)
 
