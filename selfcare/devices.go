@@ -51,20 +51,20 @@ func (t *Tariff) Repr() string {
 }
 
 type Device struct {
-	Id            json.Number `json:"productId"`
+	ID            json.Number `json:"productId"`
 	Tariffs       []Tariff    `json:"steps"`
 	CurrentTariff Tariff      `json:"currentProduct"`
 }
 
 func (d *Device) ChangeTariff(t Tariff) {
 	form := url.Values{
-		"product": {d.Id.String()},
+		"product": {d.ID.String()},
 		"offerCode": {t.Code},
 		"status": {"custom"},
 	}
 
 	if d.CurrentTariff.Code != t.Code {
-		_, err := client.PostForm(CHANGE_OFFER_URL, form)
+		_, err := client.PostForm(changeOfferURL, form)
 		if err != nil { panic(err) }
 	}
 }
@@ -75,7 +75,7 @@ func (d *Device) IsCurrentTariff(t Tariff) bool {
 
 func GetDevices() []Device {
 	sliderDataRegexp := regexp.MustCompile("var sliderData = (.*);\n")
-	matches := sliderDataRegexp.FindSubmatch(LoadPage(DEVICES_URL))
+	matches := sliderDataRegexp.FindSubmatch(LoadPage(devicesURL))
 
 	if len(matches) != 2 {
 		panic("Variable sliderData not found on devices page.")

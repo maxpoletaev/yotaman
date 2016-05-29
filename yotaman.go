@@ -7,16 +7,11 @@ import (
 	"github.com/zenwalker/yotaman/selfcare"
 )
 
-type Config struct {
-	username string
-	password string
-}
-
-var RootCmd = &cobra.Command{
+var rootCmd = &cobra.Command{
 	Use: "yotaman",
 }
 
-var ListTariffCmd = &cobra.Command{
+var listTariffCmd = &cobra.Command{
 	Use: "list",
 	Short: "Show avaliable tariffs",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -33,7 +28,7 @@ var ListTariffCmd = &cobra.Command{
 	},
 }
 
-var SetTariffCmd = &cobra.Command{
+var setTariffCmd = &cobra.Command{
 	Use: "set",
 	Short: "Change current tariff",
 	Run: func(cmd *cobra.Command, args []string) {
@@ -51,10 +46,10 @@ var SetTariffCmd = &cobra.Command{
 }
 
 func main() {
-	RootCmd.AddCommand(ListTariffCmd)
-	RootCmd.AddCommand(SetTariffCmd)
+	rootCmd.AddCommand(listTariffCmd)
+	rootCmd.AddCommand(setTariffCmd)
 
-	if err := RootCmd.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
