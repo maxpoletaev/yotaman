@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"regexp"
+	"errors"
 	"fmt"
 )
 
@@ -45,8 +46,8 @@ func (t *Tariff) Speed() float64 {
 // Human-readeable representation of trariff.
 func (t *Tariff) Repr() string {
 	return fmt.Sprintf(
-		"%d days, %d Rub, %v Kbps",
-		t.DaysRemain, t.Amount, t.Speed(),
+		"%v Kbps, %d Rub, %d days ",
+		t.Speed(), t.Amount, t.DaysRemain,
 	)
 }
 
@@ -56,7 +57,7 @@ type Device struct {
 	CurrentTariff Tariff      `json:"currentProduct"`
 }
 
-func (d *Device) ChangeTariff(t Tariff) {
+func (d *Device) ChangeTariff(t Tariff) error {
 	form := url.Values{
 		"product": {d.ID.String()},
 		"offerCode": {t.Code},
@@ -65,49 +66,62 @@ func (d *Device) ChangeTariff(t Tariff) {
 
 	if d.CurrentTariff.Code != t.Code {
 		_, err := client.PostForm(changeOfferURL, form)
-		if err != nil { panic(err) }
+		return err
 	}
+
+	return nil
 }
 
 func (d *Device) IsCurrentTariff(t Tariff) bool {
 	return d.CurrentTariff.Code == t.Code
 }
 
-func GetDevices() []Device {
+func GetDevices() ([]*Device, error) {
+	page, err := LoadPage(devicesURL)
+	if err != nil { return nil, err }
+
 	sliderDataRegexp := regexp.MustCompile("var sliderData = (.*);\n")
-	matches := sliderDataRegexp.FindSubmatch(LoadPage(devicesURL))
+	matches := sliderDataRegexp.FindSubmatch(page)
 
 	if len(matches) != 2 {
-		panic("Variable sliderData not found on devices page.")
+		return nil, errors.New("Variable sliderData not found on devices page")
 	}
 
 	sliderData := make(map[string]Device)
-	err := json.Unmarshal(matches[1], &sliderData)
-	if err != nil { panic(err) }
+	err = json.Unmarshal(matches[1], &sliderData)
+	if err != nil { return nil, err }
 
-	devices := make([]Device, 0, len(sliderData))
+	devices := make([]*Device, 0, len(sliderData))
 	for _, d := range sliderData {
-		devices = append(devices, d)
+		devices = append(devices, &d)
 	}
 
-	return devices
+	return devices, nil
 }
 
-func GetCurrentDevice() Device {
-	devices := GetDevices()
+func GetCurrentDevice() (*Device, error) {
+	devices, err := GetDevices()
+	if err != nil {
+		return nil, err
+	}
 	if len(devices) < 1 {
-		panic("No devices found.")
+		return nil, errors.New("No devices found")
 	}
-	return devices[0]
+	return devices[0], nil
 }
 
-func LoadPage(url string) []byte {
+func LoadPage(url string) ([]byte, error) {
 	resp, err := client.Get(url)
-	if err != nil { panic(err) }
+	if err != nil {
+		return nil, err
+	}
 	if resp.StatusCode != 200 {
-		panic("Page load error")
+		return nil, errors.New("Page load error")
 	}
 	defer resp.Body.Close()
-	page, _ := ioutil.ReadAll(resp.Body)
-	return page
+	page, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return page, nil
 }

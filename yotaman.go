@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/zenwalker/yotaman/selfcare"
 )
@@ -14,9 +14,14 @@ var rootCmd = &cobra.Command{
 var listTariffCmd = &cobra.Command{
 	Use: "list",
 	Short: "Show avaliable tariffs",
+
 	Run: func(cmd *cobra.Command, args []string) {
-		selfcare.AutoLogin()
-		device := selfcare.GetCurrentDevice()
+		err := selfcare.AutoLogin()
+		if err != nil { exitWithError(err) }
+
+		device, err := selfcare.GetCurrentDevice()
+		if err != nil { exitWithError(err) }
+
 		for _, tariff := range device.Tariffs {
 			var currentFlag string
 			if device.IsCurrentTariff(tariff) {
@@ -31,18 +36,34 @@ var listTariffCmd = &cobra.Command{
 var setTariffCmd = &cobra.Command{
 	Use: "set",
 	Short: "Change current tariff",
+
 	Run: func(cmd *cobra.Command, args []string) {
 		selfcare.AutoLogin()
 		newLabel := args[0] // TODO: check exists
 
-		device := selfcare.GetCurrentDevice()
+		device, err := selfcare.GetCurrentDevice()
+		if err != nil { exitWithError(err) }
+		isFound := false
+
 		for _, tariff := range device.Tariffs {
 			if tariff.Label() == newLabel {
-				device.ChangeTariff(tariff)
+				err = device.ChangeTariff(tariff)
+				if err != nil { exitWithError(err) }
+				fmt.Println("Tariff changed:", tariff.Repr())
+				isFound = true
 				break
 			}
 		}
+
+		if !isFound {
+			exitWithError(fmt.Errorf("Tariff %s not found", newLabel))
+		}
 	},
+}
+
+func exitWithError(err error) {
+	fmt.Println(err)
+	os.Exit(-1)
 }
 
 func main() {
@@ -50,7 +71,6 @@ func main() {
 	rootCmd.AddCommand(setTariffCmd)
 
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+		exitWithError(err)
 	}
 }

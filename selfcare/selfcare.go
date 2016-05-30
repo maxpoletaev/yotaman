@@ -15,7 +15,7 @@ const (
 	loginErrorURL = "https://my.yota.ru:443/selfcare/loginError"
 )
 
-func Login(username string, password string) {
+func Login(username string, password string) (err error) {
 	form := url.Values{
 		"gotoOnFail": {loginErrorURL},
 		"goto": {loginSuccessURL},
@@ -24,13 +24,13 @@ func Login(username string, password string) {
 		"IDToken1": {username},
 		"IDToken2": {password},
 	}
-	_, err := client.PostForm(loginURL, form)
-	if err != nil { panic(err) }
+	_, err = client.PostForm(loginURL, form)
+	return
 }
 
-func AutoLogin() {
-	_, err := client.Get(autoLoginURL)
-	if err != nil { panic(err) }
+func AutoLogin() (err error) {
+	_, err = client.Get(autoLoginURL)
+	return
 }
 
 func createClient() http.Client {

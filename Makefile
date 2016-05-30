@@ -1,5 +1,5 @@
 default:
-	go build yotaman.go
+	go build
 
 install:
 	cp ./yotaman ~/.bin/yotaman
