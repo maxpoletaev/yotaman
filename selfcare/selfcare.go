@@ -1,6 +1,8 @@
 package selfcare
 
 import (
+	"errors"
+	"strings"
 	"net/url"
 	"net/http"
 	"net/http/cookiejar"
@@ -15,7 +17,7 @@ const (
 	loginErrorURL = "https://my.yota.ru:443/selfcare/loginError"
 )
 
-func Login(username string, password string) (err error) {
+func Login(username string, password string) error {
 	form := url.Values{
 		"gotoOnFail": {loginErrorURL},
 		"goto": {loginSuccessURL},
@@ -24,13 +26,29 @@ func Login(username string, password string) (err error) {
 		"IDToken1": {username},
 		"IDToken2": {password},
 	}
-	_, err = client.PostForm(loginURL, form)
-	return
+
+	resp, err := client.PostForm(loginURL, form)
+	if err != nil { return err }
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("Login error")
+	}
+	return nil
 }
 
-func AutoLogin() (err error) {
-	_, err = client.Get(autoLoginURL)
-	return
+func AutoLogin() error {
+	resp, err := client.Get(autoLoginURL)
+	if err != nil { return err }
+
+	if resp.StatusCode != http.StatusOK {
+		return errors.New("login error")
+	}
+
+	if strings.Contains(resp.Request.URL.Path, "login") {
+		return errors.New("autologin error, used proxy or non-yota provider")
+	}
+
+	return nil
 }
 
 func createClient() http.Client {

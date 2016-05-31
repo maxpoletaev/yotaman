@@ -3,8 +3,28 @@ package main
 import (
 	"os"
 	"fmt"
+	"time"
+	"errors"
+	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+	"github.com/briandowns/spinner"
 	"github.com/zenwalker/yotaman/selfcare"
+)
+
+func newSpinner() *spinner.Spinner {
+	charSet := []string{"(|)", "(/)", "(—)", "(\\)"}
+	spin := spinner.New(charSet, 100 * time.Millisecond)
+	spin.Suffix = " retrieving data"
+	spin.Color("blue")
+	spin.Stop()
+	return spin
+}
+
+var (
+	red = color.New(color.FgRed).SprintFunc()
+	blue = color.New(color.FgBlue).SprintFunc()
+	green = color.New(color.FgGreen).SprintFunc()
+	spin = newSpinner()
 )
 
 var rootCmd = &cobra.Command{
@@ -16,19 +36,22 @@ var listTariffCmd = &cobra.Command{
 	Short: "Show avaliable tariffs",
 
 	Run: func(cmd *cobra.Command, args []string) {
+		spin.Start()
 		err := selfcare.AutoLogin()
 		if err != nil { exitWithError(err) }
 
 		device, err := selfcare.GetCurrentDevice()
 		if err != nil { exitWithError(err) }
+		spin.Stop()
 
 		for _, tariff := range device.Tariffs {
-			var currentFlag string
+			var out string
 			if device.IsCurrentTariff(tariff) {
-				currentFlag = ">"
+				out = blue(fmt.Sprintf("> %4s | %s", tariff.Label(), tariff.Repr()))
+			} else {
+				out = fmt.Sprintf("  %4s | %s", tariff.Label(), tariff.Repr())
 			}
-			output := fmt.Sprintf("%1s %4s | %s", currentFlag, tariff.Label(), tariff.Repr())
-			fmt.Println(output)
+			fmt.Println(out)
 		}
 	},
 }
@@ -38,8 +61,14 @@ var setTariffCmd = &cobra.Command{
 	Short: "Change current tariff",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		selfcare.AutoLogin()
-		newLabel := args[0] // TODO: check exists
+		if len(args) != 1 {
+			exitWithError(errors.New("set needs a speed argument"))
+		}
+		spin.Start()
+
+		newLabel := args[0]
+		err := selfcare.AutoLogin()
+		if err != nil { exitWithError(err) }
 
 		device, err := selfcare.GetCurrentDevice()
 		if err != nil { exitWithError(err) }
@@ -49,7 +78,10 @@ var setTariffCmd = &cobra.Command{
 			if tariff.Label() == newLabel {
 				err = device.ChangeTariff(tariff)
 				if err != nil { exitWithError(err) }
-				fmt.Println("Tariff changed:", tariff.Repr())
+
+				spin.Stop()
+				fmt.Println(green("Tariff changed: ", tariff.Repr()))
+
 				isFound = true
 				break
 			}
@@ -62,7 +94,8 @@ var setTariffCmd = &cobra.Command{
 }
 
 func exitWithError(err error) {
-	fmt.Println(err)
+	spin.Stop()
+	fmt.Println(red(err.Error()))
 	os.Exit(-1)
 }
 

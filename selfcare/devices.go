@@ -20,6 +20,7 @@ type Tariff struct {
 	MoneyEnough bool    `json:"moneyEnough"`
 }
 
+// Label returns unique label of tariiff.
 func (t *Tariff) Label() string {
 	if (t.IsMax) {
 		return "max"
@@ -27,8 +28,10 @@ func (t *Tariff) Label() string {
 	return t.RawSpeed
 }
 
+// Speed in kilobyte per second.
 func (t *Tariff) Speed() float64 {
 	if t.IsMax {
+		// infinitie speed (100 mbps)
 		return 100000
 	}
 
@@ -43,7 +46,7 @@ func (t *Tariff) Speed() float64 {
 	return speed
 }
 
-// Human-readeable representation of trariff.
+// Repr returns human-readeable representation of trariff.
 func (t *Tariff) Repr() string {
 	return fmt.Sprintf(
 		"%v Kbps, %d Rub, %d days ",
@@ -76,6 +79,7 @@ func (d *Device) IsCurrentTariff(t Tariff) bool {
 	return d.CurrentTariff.Code == t.Code
 }
 
+
 func GetDevices() ([]*Device, error) {
 	page, err := LoadPage(devicesURL)
 	if err != nil { return nil, err }
@@ -84,7 +88,7 @@ func GetDevices() ([]*Device, error) {
 	matches := sliderDataRegexp.FindSubmatch(page)
 
 	if len(matches) != 2 {
-		return nil, errors.New("Variable sliderData not found on devices page")
+		return nil, errors.New("variable sliderData not found on devices page")
 	}
 
 	sliderData := make(map[string]Device)
@@ -105,7 +109,7 @@ func GetCurrentDevice() (*Device, error) {
 		return nil, err
 	}
 	if len(devices) < 1 {
-		return nil, errors.New("No devices found")
+		return nil, errors.New("no devices found")
 	}
 	return devices[0], nil
 }
@@ -116,7 +120,7 @@ func LoadPage(url string) ([]byte, error) {
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, errors.New("Page load error")
+		return nil, errors.New("page load error")
 	}
 	defer resp.Body.Close()
 	page, err := ioutil.ReadAll(resp.Body)
