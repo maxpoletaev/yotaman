@@ -64,8 +64,8 @@ var setTariffCmd = &cobra.Command{
 		if len(args) != 1 {
 			exitWithError(errors.New("set needs a speed argument"))
 		}
-		spin.Start()
 
+		spin.Start()
 		newLabel := args[0]
 		err := selfcare.AutoLogin()
 		if err != nil { exitWithError(err) }
@@ -80,7 +80,7 @@ var setTariffCmd = &cobra.Command{
 				if err != nil { exitWithError(err) }
 
 				spin.Stop()
-				fmt.Println(green("Tariff changed: ", tariff.Repr()))
+				fmt.Println(green("tariff changed: ", tariff.Repr()))
 
 				isFound = true
 				break
@@ -88,14 +88,15 @@ var setTariffCmd = &cobra.Command{
 		}
 
 		if !isFound {
-			exitWithError(fmt.Errorf("Tariff %s not found", newLabel))
+			exitWithError(fmt.Errorf("tariff %s not found", newLabel))
 		}
 	},
 }
 
 func exitWithError(err error) {
 	spin.Stop()
-	fmt.Println(red(err.Error()))
+	errText := err.Error()
+	fmt.Println(red(errText))
 	os.Exit(-1)
 }
 
