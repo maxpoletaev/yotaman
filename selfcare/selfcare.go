@@ -2,33 +2,35 @@ package selfcare
 
 import (
 	"errors"
-	"strings"
-	"net/url"
 	"net/http"
 	"net/http/cookiejar"
+	"net/url"
+	"strings"
 )
 
 const (
-	changeOfferURL = "https://my.yota.ru/selfcare/devices/changeOffer"
-	devicesURL = "https://my.yota.ru/selfcare/devices"
-	loginURL = "https://login.yota.ru/UI/Login"
-	autoLoginURL = "https://my.yota.ru/selfcare/mydevices"
+	changeOfferURL  = "https://my.yota.ru/selfcare/devices/changeOffer"
+	devicesURL      = "https://my.yota.ru/selfcare/devices"
+	loginURL        = "https://login.yota.ru/UI/Login"
+	autoLoginURL    = "https://my.yota.ru/selfcare/mydevices"
 	loginSuccessURL = "https://my.yota.ru/selfcare/loginSuccess"
-	loginErrorURL = "https://my.yota.ru:443/selfcare/loginError"
+	loginErrorURL   = "https://my.yota.ru:443/selfcare/loginError"
 )
 
 func Login(username string, password string) error {
 	form := url.Values{
 		"gotoOnFail": {loginErrorURL},
-		"goto": {loginSuccessURL},
-		"ForceAuth": {"true"},
-		"org": {"customer"},
-		"IDToken1": {username},
-		"IDToken2": {password},
+		"goto":       {loginSuccessURL},
+		"ForceAuth":  {"true"},
+		"org":        {"customer"},
+		"IDToken1":   {username},
+		"IDToken2":   {password},
 	}
 
 	resp, err := client.PostForm(loginURL, form)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("Login error")
@@ -38,7 +40,9 @@ func Login(username string, password string) error {
 
 func AutoLogin() error {
 	resp, err := client.Get(autoLoginURL)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		return errors.New("login error")

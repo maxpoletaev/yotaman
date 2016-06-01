@@ -1,19 +1,19 @@
 package main
 
 import (
-	"os"
-	"fmt"
-	"time"
 	"errors"
+	"fmt"
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
-	"github.com/briandowns/spinner"
 	"github.com/zenwalker/yotaman/selfcare"
+	"os"
+	"time"
 )
 
 func newSpinner() *spinner.Spinner {
 	charSet := []string{"(|)", "(/)", "(—)", "(\\)"}
-	spin := spinner.New(charSet, 100 * time.Millisecond)
+	spin := spinner.New(charSet, 100*time.Millisecond)
 	spin.Suffix = " retrieving data"
 	spin.Color("blue")
 	spin.Stop()
@@ -21,10 +21,10 @@ func newSpinner() *spinner.Spinner {
 }
 
 var (
-	red = color.New(color.FgRed).SprintFunc()
-	blue = color.New(color.FgBlue).SprintFunc()
+	red   = color.New(color.FgRed).SprintFunc()
+	blue  = color.New(color.FgBlue).SprintFunc()
 	green = color.New(color.FgGreen).SprintFunc()
-	spin = newSpinner()
+	spin  = newSpinner()
 )
 
 var rootCmd = &cobra.Command{
@@ -32,16 +32,20 @@ var rootCmd = &cobra.Command{
 }
 
 var listTariffCmd = &cobra.Command{
-	Use: "list",
+	Use:   "list",
 	Short: "Show avaliable tariffs",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		spin.Start()
 		err := selfcare.AutoLogin()
-		if err != nil { exitWithError(err) }
+		if err != nil {
+			exitWithError(err)
+		}
 
 		device, err := selfcare.GetCurrentDevice()
-		if err != nil { exitWithError(err) }
+		if err != nil {
+			exitWithError(err)
+		}
 		spin.Stop()
 
 		for _, tariff := range device.Tariffs {
@@ -57,7 +61,7 @@ var listTariffCmd = &cobra.Command{
 }
 
 var setTariffCmd = &cobra.Command{
-	Use: "set",
+	Use:   "set",
 	Short: "Change current tariff",
 
 	Run: func(cmd *cobra.Command, args []string) {
@@ -68,16 +72,22 @@ var setTariffCmd = &cobra.Command{
 		spin.Start()
 		newLabel := args[0]
 		err := selfcare.AutoLogin()
-		if err != nil { exitWithError(err) }
+		if err != nil {
+			exitWithError(err)
+		}
 
-		device, err := selfcare.GetCurrentDevice()
-		if err != nil { exitWithError(err) }
 		isFound := false
+		device, err := selfcare.GetCurrentDevice()
+		if err != nil {
+			exitWithError(err)
+		}
 
 		for _, tariff := range device.Tariffs {
 			if tariff.Label() == newLabel {
 				err = device.ChangeTariff(tariff)
-				if err != nil { exitWithError(err) }
+				if err != nil {
+					exitWithError(err)
+				}
 
 				spin.Stop()
 				fmt.Println(green("tariff changed: ", tariff.Repr()))
