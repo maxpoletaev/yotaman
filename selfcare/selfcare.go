@@ -2,10 +2,11 @@ package selfcare
 
 import (
 	"errors"
+	"strings"
+	"io/ioutil"
+	"net/url"
 	"net/http"
 	"net/http/cookiejar"
-	"net/url"
-	"strings"
 )
 
 const (
@@ -16,6 +17,12 @@ const (
 	loginSuccessURL = "https://my.yota.ru/selfcare/loginSuccess"
 	loginErrorURL   = "https://my.yota.ru:443/selfcare/loginError"
 )
+
+var client = (func() http.Client {
+	jar, _ := cookiejar.New(nil)
+	client := http.Client{Jar: jar}
+	return client
+})()
 
 func Login(username string, password string) error {
 	form := url.Values{
@@ -55,10 +62,18 @@ func AutoLogin() error {
 	return nil
 }
 
-func createClient() http.Client {
-	jar, _ := cookiejar.New(nil)
-	client := http.Client{Jar: jar}
-	return client
+func LoadPage(url string) ([]byte, error) {
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, errors.New("page load error")
+	}
+	defer resp.Body.Close()
+	page, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return page, nil
 }
-
-var client = createClient()

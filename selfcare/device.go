@@ -3,58 +3,9 @@ package selfcare
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io/ioutil"
 	"net/url"
 	"regexp"
-	"strconv"
 )
-
-type Tariff struct {
-	Amount      int    `json:"amountNumber,string"`
-	DaysRemain  int    `json:"remainNumber,string"`
-	RawSpeed    string `json:"speedNumber"`
-	Code        string `json:"code"`
-	IsMax       bool   `json:"isSpeedMaximum"`
-	IsLight     bool   `json:"isLight"`
-	MoneyEnough bool   `json:"moneyEnough"`
-}
-
-// Label returns unique label of tariiff.
-func (t *Tariff) Label() string {
-	if t.IsMax {
-		return "max"
-	}
-	return t.RawSpeed
-}
-
-// Speed in kilobyte per second.
-func (t *Tariff) Speed() float64 {
-	if t.IsMax {
-		// infinitie speed (100 mbps)
-		return 100000
-	}
-
-	speed, err := strconv.ParseFloat(t.RawSpeed, 64)
-	if err != nil {
-		panic(err)
-	}
-
-	if speed < 20 {
-		// if speed in megabytes
-		return speed * 1000
-	}
-
-	return speed
-}
-
-// Repr returns human-readeable representation of trariff.
-func (t *Tariff) Repr() string {
-	return fmt.Sprintf(
-		"%v Kbps, %d Rub, %d days ",
-		t.Speed(), t.Amount, t.DaysRemain,
-	)
-}
 
 type Device struct {
 	ID            json.Number `json:"productId"`
@@ -117,20 +68,4 @@ func GetCurrentDevice() (*Device, error) {
 		return nil, errors.New("no devices found")
 	}
 	return devices[0], nil
-}
-
-func LoadPage(url string) ([]byte, error) {
-	resp, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != 200 {
-		return nil, errors.New("page load error")
-	}
-	defer resp.Body.Close()
-	page, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	return page, nil
 }
